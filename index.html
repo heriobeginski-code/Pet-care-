@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GENIE | Pet Care Protocol</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .remedy-badge { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
+        .meal-badge { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
+        .checkbox-custom { width: 1.5rem; height: 1.5rem; border-radius: 0.375rem; accent-color: #3b82f6; }
+    </style>
+</head>
+<body class="p-6">
+
+    <div class="flex justify-between items-center mb-8">
+        <a href="index.html" class="text-blue-500 text-xs font-bold uppercase tracking-widest">← Back to Hub</a>
+        <div class="text-right">
+            <h1 class="text-2xl font-bold">PET_CARE</h1>
+            <p class="text-slate-400 text-xs uppercase tracking-tighter">Strict Diet & Remedy Protocol</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="glass-card p-4 rounded-xl text-center">
+            <div class="text-[10px] text-slate-500 uppercase">Meals</div>
+            <div id="mealCount" class="text-xl font-bold">0/7</div>
+        </div>
+        <div class="glass-card p-4 rounded-xl text-center">
+            <div class="text-[10px] text-slate-500 uppercase">Oils</div>
+            <div id="oilCount" class="text-xl font-bold">0/4</div>
+        </div>
+        <div class="glass-card p-4 rounded-xl text-center">
+            <div class="text-[10px] text-slate-500 uppercase">Drops</div>
+            <div id="dropCount" class="text-xl font-bold">0/3</div>
+        </div>
+        <div class="glass-card p-4 rounded-xl text-center">
+            <div class="text-[10px] text-slate-500 uppercase">Bath</div>
+            <div id="bathStatus" class="text-xl font-bold italic text-blue-400">Todo</div>
+        </div>
+    </div>
+
+    <main class="space-y-6">
+        <section>
+            <h2 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Immediate Actions</h2>
+            <div class="glass-card p-6 rounded-2xl space-y-4">
+                <label class="flex items-center justify-between p-3 border-b border-slate-800">
+                    <span>Morning Mouth Rinse</span>
+                    <input type="checkbox" id="morningRinse" class="checkbox-custom" onchange="saveState()">
+                </label>
+                <label class="flex items-center justify-between p-3 border-b border-slate-800">
+                    <span>Bedtime Mouth Rinse</span>
+                    <input type="checkbox" id="bedtimeRinse" class="checkbox-custom" onchange="saveState()">
+                </label>
+            </div>
+        </section>
+
+        <section id="mealSection">
+            <h2 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Meal Sequence (Chicken & Rice)</h2>
+            <div id="mealList" class="space-y-3"></div>
+        </section>
+
+        <section>
+            <h2 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Remedy Tracker</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="glass-card p-4 rounded-xl">
+                    <h3 class="text-sm font-bold mb-3">Oils (4x Daily)</h3>
+                    <div id="oilChecks" class="flex gap-2"></div>
+                </div>
+                <div class="glass-card p-4 rounded-xl">
+                    <h3 class="text-sm font-bold mb-3">Drops (3x Daily)</h3>
+                    <div id="dropChecks" class="flex gap-2"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Data Structure based on User Requirements 
+        const MEAL_COUNT = 7;
+        const OIL_COUNT = 4;
+        const DROP_COUNT = 3;
+
+        let petState = JSON.parse(localStorage.getItem('pet_care_state')) || {
+            date: new Date().toLocaleDateString(),
+            meals: Array(MEAL_COUNT).fill(false),
+            oils: Array(OIL_COUNT).fill(false),
+            drops: Array(DROP_COUNT).fill(false),
+            morningRinse: false,
+            bedtimeRinse: false,
+            bathDone: false
+        };
+
+        function init() {
+            if (petState.date !== new Date().toLocaleDateString()) {
+                petState = {
+                    date: new Date().toLocaleDateString(),
+                    meals: Array(MEAL_COUNT).fill(false),
+                    oils: Array(OIL_COUNT).fill(false),
+                    drops: Array(DROP_COUNT).fill(false),
+                    morningRinse: false,
+                    bedtimeRinse: false,
+                    bathDone: false
+                };
+            }
+            render();
+        }
+
+        function render() {
+            // Render Meals
+            const mealList = document.getElementById('mealList');
+            mealList.innerHTML = petState.meals.map((done, i) => `
+                <div class="glass-card p-4 rounded-xl flex items-center justify-between ${done ? 'opacity-50' : ''}">
+                    <div class="flex items-center gap-4">
+                        <span class="meal-badge px-2 py-1 rounded text-[10px] font-bold">MEAL ${i+1}</span>
+                        <div>
+                            <div class="text-sm font-bold">Mild Diet + Powder/Treats/Drops</div>
+                            <div class="text-[10px] text-slate-500 uppercase tracking-tighter">Rinse Mouth → Eat → Wipe Down</div>
+                        </div>
+                    </div>
+                    <input type="checkbox" ${done ? 'checked' : ''} class="checkbox-custom" onchange="toggleMeal(${i})">
+                </div>
+            `).join('');
+
+            // Render Oils/Drops
+            renderQuickChecks('oilChecks', petState.oils, 'toggleOil');
+            renderQuickChecks('dropChecks', petState.drops, 'toggleDrop');
+
+            // Update Counts
+            document.getElementById('mealCount').innerText = `${petState.meals.filter(Boolean).length}/${MEAL_COUNT}`;
+            document.getElementById('oilCount').innerText = `${petState.oils.filter(Boolean).length}/${OIL_COUNT}`;
+            document.getElementById('dropCount').innerText = `${petState.drops.filter(Boolean).length}/${DROP_COUNT}`;
+            document.getElementById('morningRinse').checked = petState.morningRinse;
+            document.getElementById('bedtimeRinse').checked = petState.bedtimeRinse;
+            
+            localStorage.setItem('pet_care_state', JSON.stringify(petState));
+        }
+
+        function renderQuickChecks(id, arr, fnName) {
+            document.getElementById(id).innerHTML = arr.map((done, i) => `
+                <input type="checkbox" ${done ? 'checked' : ''} 
+                       class="checkbox-custom w-8 h-8" 
+                       onchange="${fnName}(${i})">
+            `).join('');
+        }
+
+        window.toggleMeal = (i) => { petState.meals[i] = !petState.meals[i]; render(); };
+        window.toggleOil = (i) => { petState.oils[i] = !petState.oils[i]; render(); };
+        window.toggleDrop = (i) => { petState.drops[i] = !petState.drops[i]; render(); };
+        window.saveState = () => {
+            petState.morningRinse = document.getElementById('morningRinse').checked;
+            petState.bedtimeRinse = document.getElementById('bedtimeRinse').checked;
+            render();
+        };
+
+        init();
+    </script>
+</body>
+</html>
